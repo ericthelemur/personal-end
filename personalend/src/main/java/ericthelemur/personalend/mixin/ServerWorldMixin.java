@@ -1,4 +1,5 @@
 package ericthelemur.personalend.mixin;
+import ericthelemur.personalend.DragonPersistentState;
 import net.minecraft.entity.boss.dragon.EnderDragonFight;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryKey;
@@ -25,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -44,18 +46,19 @@ public abstract class ServerWorldMixin extends World {
     @Inject(at = @At("TAIL"), method = "<init>")
     public void constructorMixin(MinecraftServer server, Executor workerExecutor, LevelStorage.Session session, ServerWorldProperties properties, RegistryKey worldKey, DimensionOptions dimensionOptions, WorldGenerationProgressListener worldGenerationProgressListener, boolean debugWorld, long seed, List spawners, boolean shouldTickTime, RandomSequencesState randomSequencesState, CallbackInfo ci) {
         var sw = (ServerWorld) (World) this;
-        if (this.getRegistryKey() != World.END) {
-            if (sw.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
-                ServerWorld.createEndSpawnPlatform(sw);
-                if (this.enderDragonFight == null && sw.getAliveEnderDragons().isEmpty()) {
+        if (this.getRegistryKey() != World.END && sw.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
+            if (this.enderDragonFight == null && sw.getAliveEnderDragons().isEmpty()) {
+                var ident = sw.getRegistryKey().getValue();
+                var fight = DragonPersistentState.getServerState(server).getFight(UUID.fromString(ident.getPath()));
+                if (fight != null) {
+                    this.enderDragonFight = new EnderDragonFight(sw, sw.getSeed(), fight);
+                    LoggerFactory.getLogger("mixin").info("Loaded dragon fight {}", this.enderDragonFight);
+                } else {
                     var data = EnderDragonFight.Data.DEFAULT;
                     this.enderDragonFight = new EnderDragonFight(sw, this.getSeed(), data);
                     LoggerFactory.getLogger("mixin").info("Created new dragon fight {}", this.enderDragonFight);
                 }
-//                this.enderDragonFight = new EnderDragonFight(sw, this.getSeed(), server.getSaveProperties().getDragonFight());
             }
-        } else {
-            LoggerFactory.getLogger("mixin").info("World Mixin {} {}", sw.getDimensionKey().getValue(), DimensionTypes.THE_END.getValue());
         }
 
     }
