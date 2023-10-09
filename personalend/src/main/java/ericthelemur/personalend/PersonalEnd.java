@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -94,6 +95,12 @@ public class PersonalEnd implements ModInitializer {
 		spawn = spawn.add(0, -1.5, 0);
 		TeleportTarget teleportTarget = new TeleportTarget(spawn, Vec3d.ZERO, 90.0F, 0.0F);
 		player = FabricDimensions.teleport(player, new_end, teleportTarget);
+
+		ServerPlayerEntity server_player = (ServerPlayerEntity) player;
+		var al = player.getServer().getAdvancementLoader();
+		var at = server_player.getAdvancementTracker();
+		at.grantCriterion(al.get(new Identifier("end/root")), "entered_end");
+		at.grantCriterion(al.get(new Identifier("story/enter_the_end")), "entered_end");
 	}
 
 	public static void tpToOverworld(Entity entity, MinecraftServer server) {

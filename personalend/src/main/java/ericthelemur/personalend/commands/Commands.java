@@ -13,6 +13,8 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
+import java.util.function.Predicate;
+
 import static net.minecraft.server.command.CommandManager.*;
 public class Commands {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
@@ -23,10 +25,7 @@ public class Commands {
         dispatcher.register(
                 literal("end")
                 .requires(ServerCommandSource::isExecutedByPlayer)
-                .requires(source -> {
-                    Advancement a = source.getServer().getAdvancementLoader().get(new Identifier("end/root"));
-                    return source.getPlayer().getAdvancementTracker().getProgress(a).isDone();
-                })
+                .requires(requiresAdvancement("end/root"))
                 .then(
                     literal("visit").then(
                         argument("target", StringArgumentType.word())
@@ -35,12 +34,19 @@ public class Commands {
                     ).executes(ctx -> visit(ctx, null))
                 ).then(
                     literal("shared")
-                        .executes(ctx -> {
-                            PersonalEnd.tpPlayerToSharedEnd(ctx.getSource().getPlayer());
-                            return Command.SINGLE_SUCCESS;
-                        })
+                    .executes(ctx -> {
+                        PersonalEnd.tpPlayerToSharedEnd(ctx.getSource().getPlayer());
+                        return Command.SINGLE_SUCCESS;
+                    })
                 )
         );
+    }
+
+    public static Predicate<ServerCommandSource> requiresAdvancement(String advancement) {
+        return source -> {
+            Advancement a = source.getServer().getAdvancementLoader().get(new Identifier(advancement));
+            return source.getPlayer().getAdvancementTracker().getProgress(a).isDone();
+        };
     }
 
     private static int visit(CommandContext<ServerCommandSource> ctx, String target) throws CommandSyntaxException {
