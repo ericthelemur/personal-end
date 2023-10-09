@@ -104,4 +104,11 @@ public class PersonalEnd implements ModInitializer {
 		var tt = new TeleportTarget(serverWorld.getSpawnPos().toCenterPos(), Vec3d.ZERO, serverWorld.getSpawnAngle(), 0);
 		FabricDimensions.teleport(entity, serverWorld, tt);
 	}
+
+	public static void tpPlayerToSharedEnd(PlayerEntity visitor) {
+		visitor.sendMessage(Text.literal("Visiting the shared end ..."));
+
+		MinecraftServer server = visitor.getServer();
+		visitor.moveToWorld(server.getWorld(World.END));
+	}
 }
