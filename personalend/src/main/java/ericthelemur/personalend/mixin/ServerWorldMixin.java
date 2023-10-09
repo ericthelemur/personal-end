@@ -49,7 +49,9 @@ public abstract class ServerWorldMixin extends World {
         if (this.getRegistryKey() != World.END && sw.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
             if (this.enderDragonFight == null && sw.getAliveEnderDragons().isEmpty()) {
                 var ident = sw.getRegistryKey().getValue();
-                var fight = DragonPersistentState.getServerState(server).getFight(UUID.fromString(ident.getPath()));
+                var state = DragonPersistentState.getServerState(server);
+                var fight = state.getFight(UUID.fromString(ident.getPath()));
+                state.addLoadedWorld(ident.getPath(), sw);
                 if (fight != null) {
                     this.enderDragonFight = new EnderDragonFight(sw, sw.getSeed(), fight);
                     LoggerFactory.getLogger("mixin").info("Loaded dragon fight {}", this.enderDragonFight);

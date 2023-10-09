@@ -3,12 +3,8 @@ package ericthelemur.personalend;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.server.world.ServerWorld;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.UUID;
 
 public class PersonalEnd implements ModInitializer {
 	// This logger is used to write text to the console and the log file.
@@ -17,7 +13,6 @@ public class PersonalEnd implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("personal-end");
 	public static final String MOD_ID = "personalend";
 
-	public static HashMap<String, ServerWorld> loaded_worlds = new HashMap<>();
 
 	@Override
 	public void onInitialize() {
@@ -28,10 +23,6 @@ public class PersonalEnd implements ModInitializer {
 
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			var state = DragonPersistentState.getServerState(server);
-
-			for (var dim : loaded_worlds.entrySet()) {
-				state.addFight(UUID.fromString(dim.getKey()), dim.getValue().getEnderDragonFight().toData());
-			}
 			state.markDirty();
 		});
 
