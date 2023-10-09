@@ -1,7 +1,9 @@
 package ericthelemur.personalend;
 
+import ericthelemur.personalend.commands.Commands;
 import net.fabricmc.api.ModInitializer;
 
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,10 @@ public class PersonalEnd implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			var state = DragonPersistentState.getServerState(server);
 			state.markDirty();
+		});
+
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+			Commands.register(dispatcher);
 		});
 
 		LOGGER.info("Initialized Personal End!");

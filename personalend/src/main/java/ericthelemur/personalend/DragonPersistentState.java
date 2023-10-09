@@ -98,8 +98,8 @@ public class DragonPersistentState extends PersistentState {
         this.usernames.put(username, uuid);
     }
 
-    public Collection<UUID> getUsernames() {
-        return usernames.values();
+    public Collection<String> getUsernames() {
+        return usernames.keySet();
     }
 
 }
