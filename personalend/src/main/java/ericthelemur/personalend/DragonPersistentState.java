@@ -18,6 +18,7 @@ public class DragonPersistentState extends PersistentState {
 
     private HashMap<UUID, EnderDragonFight.Data> fights = new HashMap<>();
     private HashMap<String, UUID> usernames = new HashMap<>();
+    private HashMap<UUID, String> uuids = new HashMap<>();
 
     private static HashMap<String, ServerWorld> loadedWorlds = new HashMap<>();
 
@@ -54,6 +55,7 @@ public class DragonPersistentState extends PersistentState {
         var names = tag.getCompound("names");
         for (var name : names.getKeys()) {
             state.usernames.put(name, UUID.fromString(names.getString(name)));
+            state.uuids.put(UUID.fromString(names.getString(name)), name);
         }
         return state;
     }
@@ -72,9 +74,16 @@ public class DragonPersistentState extends PersistentState {
         addPlayer(uuid, world.getServer());
     }
 
-    private void addPlayer(String uuid, MinecraftServer server) {
-        var username = server.getPlayerManager().getPlayer(UUID.fromString(uuid));
-        usernames.put(username.getGameProfile().getName(), UUID.fromString(uuid));
+    public void addPlayer(String uuid, MinecraftServer server) {
+        var player = server.getPlayerManager().getPlayer(UUID.fromString(uuid));
+        if (player != null) {
+            addPlayer(UUID.fromString(uuid), player.getGameProfile().getName());
+        }
+    }
+
+    public void addPlayer(UUID uuid, String username) {
+        usernames.put(username, uuid);
+        uuids.put(uuid, username);
     }
 
     public HashMap<UUID, EnderDragonFight.Data> getFights() {
@@ -86,7 +95,11 @@ public class DragonPersistentState extends PersistentState {
     }
 
     public void addFight(String uuid, ServerWorld dim) {
-        this.fights.put(UUID.fromString(uuid), dim.getEnderDragonFight().toData());
+        var fight = dim.getEnderDragonFight();
+        if (fight != null) {
+            this.fights.put(UUID.fromString(uuid), fight.toData());
+        }
+
         addPlayer(uuid, dim.getServer());
     }
 
@@ -94,12 +107,12 @@ public class DragonPersistentState extends PersistentState {
         return usernames.get(username);
     }
 
-    public void addUUID(String username, UUID uuid) {
-        this.usernames.put(username, uuid);
-    }
-
     public Collection<String> getUsernames() {
         return usernames.keySet();
+    }
+
+    public String getUsername(UUID uuid) {
+        return uuids.get(uuid);
     }
 
 }

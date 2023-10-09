@@ -29,47 +29,10 @@ public class EndPortalBlockMixin {
 	private void disableEndPortal(BlockState state, World world, BlockPos pos, Entity entity, CallbackInfo ci) {
 		MinecraftServer server = entity.getServer();
 		if (entity.isPlayer() && world.getRegistryKey() == World.OVERWORLD) {
-			genEnd((PlayerEntity) entity, (PlayerEntity) entity);
+			PersonalEnd.genAndGoToEnd((PlayerEntity) entity, entity.getUuid(), null);
 		} else if (world.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
-			tpToOverworld(entity, server);
+			PersonalEnd.tpToOverworld(entity, server);
 		}
 		ci.cancel();
-	}
-
-	private void genEnd(PlayerEntity owner, PlayerEntity visitor) {
-		MinecraftServer server = owner.getServer();
-		Fantasy fantasy = Fantasy.get(server);
-
-		Identifier end_key = new Identifier(PersonalEnd.MOD_ID, owner.getUuidAsString());
-
-		Long end_seed = (long) owner.getUuidAsString().hashCode();
-
-		ChunkGenerator end_gen = server.getWorld(World.END).getChunkManager().getChunkGenerator();
-		RuntimeWorldConfig config = new RuntimeWorldConfig()
-				.setDimensionType(DimensionTypes.THE_END)
-				.setGenerator(end_gen)
-				.setSeed(end_seed);
-
-		RuntimeWorldHandle worldHandle = fantasy.getOrOpenPersistentWorld(end_key, config);
-
-		ServerWorld new_end = worldHandle.asWorld();
-		tpPlayerToEnd(visitor, new_end);
-	}
-
-	private void tpPlayerToEnd(PlayerEntity player, ServerWorld new_end) {
-		ServerWorld.createEndSpawnPlatform(new_end);
-		Vec3d spawn = ServerWorld.END_SPAWN_POS.toCenterPos();
-		spawn = spawn.add(0, -1.5, 0);
-		TeleportTarget teleportTarget = new TeleportTarget(spawn, Vec3d.ZERO, 90.0F, 0.0F);
-		player = FabricDimensions.teleport(player, new_end, teleportTarget);
-	}
-
-	private void tpToOverworld(Entity entity, MinecraftServer server) {
-		ServerWorld serverWorld = server.getOverworld();
-		if (serverWorld == null) {
-			return;
-		}
-		var tt = new TeleportTarget(serverWorld.getSpawnPos().toCenterPos(), Vec3d.ZERO, serverWorld.getSpawnAngle(), 0);
-		FabricDimensions.teleport(entity, serverWorld, tt);
 	}
 }

@@ -1,9 +1,14 @@
 package ericthelemur.personalend.commands;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import ericthelemur.personalend.DragonPersistentState;
+import ericthelemur.personalend.PersonalEnd;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
@@ -16,12 +21,18 @@ public class Commands {
     public static void visit(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
                 literal("end").then(literal("visit").then(
-                        argument("targets", StringArgumentType.word())
+                        argument("target", StringArgumentType.word())
                             .suggests(new EndDimOwnerSuggester())
                             .executes(ctx -> {
-                                ctx.getSource().sendMessage(Text.literal(String.format("Visiting {}'s end")));
+                                var state = DragonPersistentState.getServerState(ctx.getSource().getServer());
+                                var target = StringArgumentType.getString(ctx, "target");
+                                var uuid = state.getUUID(target);
+                                if (uuid == null) {
+                                    throw new SimpleCommandExceptionType(Text.literal(target + " doesn't have a end.")).create();
+                                }
+                                PersonalEnd.genAndGoToEnd(ctx.getSource().getPlayer(), uuid, state.getUsername(uuid));
 
-                                return 0;
+                                return Command.SINGLE_SUCCESS;
                             })
                 ))
         );
