@@ -39,6 +39,10 @@ public class PersonalEnd implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			var state = DragonPersistentState.getServerState(server);
 			state.markDirty();
+
+			for (var uuid : state.getFights().keySet()) {
+				createWorld(server, uuid);
+			}
 		});
 
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
@@ -69,38 +73,53 @@ public class PersonalEnd implements ModInitializer {
 		}
 
 		MinecraftServer server = visitor.getServer();
-		Fantasy fantasy = Fantasy.get(server);
-
-		Identifier end_key = new Identifier(PersonalEnd.MOD_ID, owner.toString());
-
-		Long end_seed = (long) owner.toString().hashCode();
 
 		LOGGER.info("Generating dimension for " + ownerName + " (" + owner + ")");
-		ChunkGenerator end_gen = server.getWorld(World.END).getChunkManager().getChunkGenerator();
-		RuntimeWorldConfig config = new RuntimeWorldConfig()
-				.setDimensionType(DimensionTypes.THE_END)
-				.setGenerator(end_gen)
-				.setSeed(end_seed);
-
-		RuntimeWorldHandle worldHandle = fantasy.getOrOpenPersistentWorld(end_key, config);
-
+		var worldHandle = createWorld(server, owner);
 		ServerWorld new_end = worldHandle.asWorld();
-		visitor.sendMessage(Text.literal(String.format("Teleporting ...")));
-		tpPlayerToEnd(visitor, new_end);
+
+		visitor.sendMessage(Text.literal("Teleporting ..."));
+		visitor = tpPlayerToEnd(visitor, new_end);
+		grantAdvancements((ServerPlayerEntity) visitor);
 	}
 
-	private static void tpPlayerToEnd(PlayerEntity player, ServerWorld new_end) {
+	public static RuntimeWorldHandle createWorld(MinecraftServer server, UUID owner) {
+		ChunkGenerator end_gen = server.getWorld(World.END).getChunkManager().getChunkGenerator();
+		var config = new RuntimeWorldConfig()
+				.setDimensionType(DimensionTypes.THE_END)
+				.setGenerator(end_gen)
+				.setSeed(owner.toString().hashCode());
+
+		Identifier end_key = new Identifier(PersonalEnd.MOD_ID, owner.toString());
+		Fantasy fantasy = Fantasy.get(server);
+		return fantasy.getOrOpenPersistentWorld(end_key, config);
+	}
+
+	private static PlayerEntity tpPlayerToEnd(PlayerEntity player, ServerWorld new_end) {
 		ServerWorld.createEndSpawnPlatform(new_end);
 		Vec3d spawn = ServerWorld.END_SPAWN_POS.toCenterPos();
 		spawn = spawn.add(0, -1.5, 0);
 		TeleportTarget teleportTarget = new TeleportTarget(spawn, Vec3d.ZERO, 90.0F, 0.0F);
-		player = FabricDimensions.teleport(player, new_end, teleportTarget);
+		return FabricDimensions.teleport(player, new_end, teleportTarget);
+	}
 
-		ServerPlayerEntity server_player = (ServerPlayerEntity) player;
-		var al = player.getServer().getAdvancementLoader();
-		var at = server_player.getAdvancementTracker();
-		at.grantCriterion(al.get(new Identifier("end/root")), "entered_end");
-		at.grantCriterion(al.get(new Identifier("story/enter_the_end")), "entered_end");
+	private static void grantAdvancements(ServerPlayerEntity player) {
+		MinecraftServer server = player.getServer();
+		var al = server.getAdvancementLoader();
+		var at = player.getAdvancementTracker();
+		var a1 = al.get(new Identifier("end/root"));
+		if (!at.getProgress(a1).isDone()) {
+			at.grantCriterion(a1, "entered_end");
+			var a2 = al.get(new Identifier("story/enter_the_end"));
+			at.grantCriterion(a2, "entered_end");
+			server.getPlayerManager().sendCommandTree(player);
+
+			player.sendMessage(Text.literal(
+				"You now have your own personal End to explore, loot & beat!\n" +
+				"Now you've visited your End, use /end shared or /end visit <player> to join others.\n" +
+				"Entering a portal within 30s after another player pulls you to their End too."
+			));
+		}
 	}
 
 	public static void tpToOverworld(Entity entity, MinecraftServer server) {
