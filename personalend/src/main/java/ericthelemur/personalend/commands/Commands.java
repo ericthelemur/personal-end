@@ -6,6 +6,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import ericthelemur.personalend.DragonPersistentState;
 import ericthelemur.personalend.PersonalEnd;
 import net.minecraft.advancement.Advancement;
@@ -13,6 +15,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import static net.minecraft.server.command.CommandManager.*;
@@ -29,7 +32,7 @@ public class Commands {
                 .then(
                     literal("visit").then(
                         argument("target", StringArgumentType.word())
-                        .suggests(new EndDimOwnerSuggester())
+                        .suggests(Commands::dimSuggester)
                         .executes(ctx -> visit(ctx, StringArgumentType.getString(ctx, "target")))
                     ).executes(ctx -> visit(ctx, null))
                 ).then(
@@ -47,6 +50,14 @@ public class Commands {
             Advancement a = source.getServer().getAdvancementLoader().get(new Identifier(advancement));
             return source.getPlayer().getAdvancementTracker().getProgress(a).isDone();
         };
+    }
+
+    public static CompletableFuture<Suggestions> dimSuggester(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) {
+        var state = DragonPersistentState.getServerState(context.getSource().getServer());
+        for (var s : state.getUsernames()) {
+            builder.suggest(s);
+        }
+        return builder.buildFuture();
     }
 
     private static int visit(CommandContext<ServerCommandSource> ctx, String target) throws CommandSyntaxException {

@@ -1,4 +1,5 @@
 package ericthelemur.personalend.mixin;
+
 import ericthelemur.personalend.DragonPersistentState;
 import net.minecraft.entity.boss.dragon.EnderDragonFight;
 import net.minecraft.registry.DynamicRegistryManager;
@@ -19,7 +20,6 @@ import net.minecraft.world.level.storage.LevelStorage;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

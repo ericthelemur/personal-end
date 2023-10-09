@@ -3,7 +3,6 @@
   "package": "ericthelemur.personalend.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "EnderDragonFightMixin",
     "EndPortalBlockMixin",
     "ServerWorldMixin"
   ],

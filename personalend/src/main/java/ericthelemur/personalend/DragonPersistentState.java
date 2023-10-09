@@ -8,7 +8,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
-import org.apache.logging.log4j.core.jmx.Server;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,6 +19,7 @@ public class DragonPersistentState extends PersistentState {
     private HashMap<String, UUID> usernames = new HashMap<>();
     private HashMap<UUID, String> uuids = new HashMap<>();
 
+    // Probably shouldn't be here, but not worth the hassle to move
     private static HashMap<String, ServerWorld> loadedWorlds = new HashMap<>();
 
     @Override
