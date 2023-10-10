@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import ericthelemur.personalend.Config;
 import ericthelemur.personalend.DragonPersistentState;
 import ericthelemur.personalend.PersonalEnd;
 import net.minecraft.advancement.Advancement;
@@ -32,19 +33,31 @@ public class Commands {
     public static void visit(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
                 literal("end")
-                .requires(ServerCommandSource::isExecutedByPlayer)
+                .requires((s) -> PersonalEnd.CONFIG.endCommand || s.hasPermissionLevel(3))
                 .requires(requiresAdvancement("end/root"))
-                .requires((s) -> PersonalEnd.CONFIG.endCommand)
                 .then(
-                    literal("visit").then(
+                    literal("visit")
+                    .requires(ServerCommandSource::isExecutedByPlayer)
+                    .then(
                         argument("target", StringArgumentType.word())
                         .suggests(Commands::dimSuggester)
                         .executes(ctx -> visit(ctx, StringArgumentType.getString(ctx, "target")))
                     ).executes(ctx -> visit(ctx, null))
                 ).then(
                     literal("shared")
+                    .requires(ServerCommandSource::isExecutedByPlayer)
                     .executes(ctx -> {
                         PersonalEnd.tpPlayerToSharedEnd(ctx.getSource().getPlayer());
+                        return Command.SINGLE_SUCCESS;
+                    })
+                ).then(
+                    literal("reload")
+                    .requires((s) -> s.hasPermissionLevel(3))
+                    .executes(ctx -> {
+                        Config.load();
+                        var s = ctx.getSource();
+                        if (s.getServer() != null)
+                            s.getServer().getPlayerManager().sendCommandTree(s.getPlayer());
                         return Command.SINGLE_SUCCESS;
                     })
                 )
