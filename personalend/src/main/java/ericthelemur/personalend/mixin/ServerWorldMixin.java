@@ -17,6 +17,7 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.dimension.DimensionTypes;
 import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.level.storage.LevelStorage;
+import net.minecraft.world.spawner.Spawner;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -42,20 +43,25 @@ public abstract class ServerWorldMixin extends World {
         super(properties, registryRef, registryManager, dimensionEntry, profiler, isClient, debugWorld, biomeAccess, maxChainedNeighborUpdates);
     }
 
-
     @Inject(at = @At("TAIL"), method = "<init>")
-    public void constructorMixin(MinecraftServer server, Executor workerExecutor, LevelStorage.Session session, ServerWorldProperties properties, RegistryKey worldKey, DimensionOptions dimensionOptions, WorldGenerationProgressListener worldGenerationProgressListener, boolean debugWorld, long seed, List spawners, boolean shouldTickTime, RandomSequencesState randomSequencesState, CallbackInfo ci) {
+    public void constructorMixin(MinecraftServer server, Executor workerExecutor, LevelStorage.Session session, ServerWorldProperties properties, RegistryKey<World> worldKey, DimensionOptions dimensionOptions, WorldGenerationProgressListener worldGenerationProgressListener, boolean debugWorld, long seed, List<Spawner> spawners, boolean shouldTickTime, RandomSequencesState randomSequencesState, CallbackInfo ci) {
         var sw = (ServerWorld) (World) this;
+        // If a personal End
         if (this.getRegistryKey() != World.END && sw.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
+            // If no current dragon (now redundant?)
             if (this.enderDragonFight == null && sw.getAliveEnderDragons().isEmpty()) {
+                // Load existing fight
                 var ident = sw.getRegistryKey().getValue();
                 var state = DragonPersistentState.getServerState(server);
                 var fight = state.getFight(UUID.fromString(ident.getPath()));
+                // Record the world
                 state.addLoadedWorld(ident.getPath(), sw);
                 if (fight != null) {
+                    // Load existing fight if exists
                     this.enderDragonFight = new EnderDragonFight(sw, sw.getSeed(), fight);
                     LoggerFactory.getLogger("mixin").info("Loaded dragon fight {}", this.enderDragonFight);
                 } else {
+                    // Set default fight if none
                     var data = EnderDragonFight.Data.DEFAULT;
                     this.enderDragonFight = new EnderDragonFight(sw, this.getSeed(), data);
                     LoggerFactory.getLogger("mixin").info("Created new dragon fight {}", this.enderDragonFight);

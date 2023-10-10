@@ -24,6 +24,11 @@ public class Commands {
         visit(dispatcher);
     }
 
+    /**
+     * Registers the visit command as
+     * /end visit <player> or /end visit (sends to own)
+     * or /end shared
+     */
     public static void visit(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(
                 literal("end")
@@ -45,6 +50,9 @@ public class Commands {
         );
     }
 
+    /**
+     * Predicate to check if the calling player holds the provided advancement (has the End advancement)
+     */
     public static Predicate<ServerCommandSource> requiresAdvancement(String advancement) {
         return source -> {
             Advancement a = source.getServer().getAdvancementLoader().get(new Identifier(advancement));
@@ -52,6 +60,9 @@ public class Commands {
         };
     }
 
+    /**
+     * Makes the command autocomplete suggest all created personal Ends
+     */
     public static CompletableFuture<Suggestions> dimSuggester(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) {
         var state = DragonPersistentState.getServerState(context.getSource().getServer());
         for (var s : state.getUsernames()) {
@@ -60,6 +71,9 @@ public class Commands {
         return builder.buildFuture();
     }
 
+    /**
+     * The action of the /end visit command, if no target, send player to own End
+     */
     private static int visit(CommandContext<ServerCommandSource> ctx, String target) throws CommandSyntaxException {
         var state = DragonPersistentState.getServerState(ctx.getSource().getServer());
         var uuid = target == null ? ctx.getSource().getPlayer().getUuid() : state.getUUID(target);

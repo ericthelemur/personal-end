@@ -36,6 +36,7 @@ public class PersonalEnd implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		// Load state and load worlds on start
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			var state = DragonPersistentState.getServerState(server);
 			state.markDirty();
@@ -45,15 +46,18 @@ public class PersonalEnd implements ModInitializer {
 			}
 		});
 
+		// Mark state dirty on stop (to ensure save)
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			var state = DragonPersistentState.getServerState(server);
 			state.markDirty();
 		});
 
+		// Register /end command
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
 			Commands.register(dispatcher);
 		});
 
+		// Save player names and uuids on disconnect
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			var state = DragonPersistentState.getServerState(server);
 			if (state.getFight(handler.player.getUuid()) != null) {
@@ -65,6 +69,12 @@ public class PersonalEnd implements ModInitializer {
 		LOGGER.info("Initialized Personal End!");
 	}
 
+	/**
+	 * Creates/loads the personal End dimension & teleports the player to it
+	 * @param visitor Player to teleport to the End dimension
+	 * @param owner UUID of dimension owner
+	 * @param ownerName Display name of dimension owner
+	 */
 	public static void genAndGoToEnd(PlayerEntity visitor, UUID owner, String ownerName) {
 		if (ownerName == null || owner.equals(visitor.getUuid())) {
 			visitor.sendMessage(Text.literal("Visiting your end ..."));
@@ -83,6 +93,11 @@ public class PersonalEnd implements ModInitializer {
 		grantAdvancements((ServerPlayerEntity) visitor);
 	}
 
+	/**
+	 * Constructs the world config and creates/loads the world with fantasy
+	 * @param owner UUID of the dimension owner
+	 * @return Handle of the created/loaded world
+	 */
 	public static RuntimeWorldHandle createWorld(MinecraftServer server, UUID owner) {
 		ChunkGenerator end_gen = server.getWorld(World.END).getChunkManager().getChunkGenerator();
 		var config = new RuntimeWorldConfig()
@@ -95,6 +110,10 @@ public class PersonalEnd implements ModInitializer {
 		return fantasy.getOrOpenPersistentWorld(end_key, config);
 	}
 
+	/**
+	 * Teleports a player into the new end (needs to be manual as internal code works for End only)
+	 * @return The new player object in new dimension
+	 */
 	private static PlayerEntity tpPlayerToEnd(PlayerEntity player, ServerWorld new_end) {
 		ServerWorld.createEndSpawnPlatform(new_end);
 		Vec3d spawn = ServerWorld.END_SPAWN_POS.toCenterPos();
@@ -103,6 +122,9 @@ public class PersonalEnd implements ModInitializer {
 		return FabricDimensions.teleport(player, new_end, teleportTarget);
 	}
 
+	/**
+	 * Grants the End visiting advancements to the player. Also sends intruction message if it's their first visit
+	 */
 	private static void grantAdvancements(ServerPlayerEntity player) {
 		MinecraftServer server = player.getServer();
 		var al = server.getAdvancementLoader();
@@ -115,13 +137,18 @@ public class PersonalEnd implements ModInitializer {
 			server.getPlayerManager().sendCommandTree(player);
 
 			player.sendMessage(Text.literal(
-				"You now have your own personal End to explore, loot & beat!\n" +
-				"Now you've visited your End, use /end shared or /end visit <player> to join others.\n" +
-				"Entering a portal within 30s after another player pulls you to their End too."
+			"""
+					You now have your own personal End to explore, loot & beat!
+					Now you've visited your End, use /end shared or /end visit <player> to join others.
+					Entering a portal within 30s after another player pulls you to their End too."""
 			));
 		}
 	}
 
+	/**
+	 * Teleports a player back to the overworld from portal
+	 * (default behaviour sends to shared end from individual Ends)
+	 */
 	public static void tpToOverworld(Entity entity, MinecraftServer server) {
 		ServerWorld serverWorld = server.getOverworld();
 		if (serverWorld == null) {
@@ -131,6 +158,9 @@ public class PersonalEnd implements ModInitializer {
 		FabricDimensions.teleport(entity, serverWorld, tt);
 	}
 
+	/**
+	 * Sends a player to the normal End, pretty much how Minecraft's End Portal code works
+	 */
 	public static void tpPlayerToSharedEnd(PlayerEntity visitor) {
 		visitor.sendMessage(Text.literal("Visiting the shared end ..."));
 

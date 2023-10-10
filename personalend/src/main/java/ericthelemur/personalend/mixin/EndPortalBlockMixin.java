@@ -19,28 +19,36 @@ import java.util.UUID;
 
 @Mixin(EndPortalBlock.class)
 public class EndPortalBlockMixin {
+	// To record times for portal tailgating
 	private static long lastEntryTime;
 	private static UUID lastPlayer;
 	private static final long trailTime = 15 * 1000;
 
+	/**
+	 * Sends a player to their End from the overworld (entities still go to the shared end)
+	 */
 	@Inject(at = @At("HEAD"), method = "onEntityCollision", cancellable = true)
-	private void disableEndPortal(BlockState state, World world, BlockPos pos, Entity entity, CallbackInfo ci) {
+	private void sendToEnds(BlockState state, World world, BlockPos pos, Entity entity, CallbackInfo ci) {
 		MinecraftServer server = entity.getServer();
 		if (entity.isPlayer() && world.getRegistryKey() == World.OVERWORLD) {
-			PersonalEnd.LOGGER.info("Joining world as {} {}", entity.getName().getString(), server.getTickTime());
+			// Send player from overworld to personal End
 			var owner = getDimOwner(entity);
 			var dstate = DragonPersistentState.getServerState(server);
 			PersonalEnd.genAndGoToEnd((PlayerEntity) entity, owner, dstate.getUsername(owner));
 			ci.cancel();
 		} else if (world.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
+			// Send player from person End to overworld
 			PersonalEnd.tpToOverworld(entity, server);
 			ci.cancel();
 		}
+		// Non-player and other dims behave as default
 	}
 
+	/**
+	 * Implement the tailgating logic, send to own unless time is within window of entry
+	 */
 	private UUID getDimOwner(Entity entity) {
 		long t = System.currentTimeMillis();
-		PersonalEnd.LOGGER.info("Times base {} limit {} current {} last {}", lastEntryTime, lastEntryTime + trailTime, t, lastPlayer);
 		UUID owner = entity.getUuid();
 		if (lastPlayer != null && t < lastEntryTime + trailTime) {
 			owner = lastPlayer;
