@@ -34,8 +34,12 @@ public class PersonalEnd implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("personal-end");
 	public static final String MOD_ID = "personalend";
 
+	public static Config CONFIG = new Config();
+
 	@Override
 	public void onInitialize() {
+		Config.load();
+
 		// Load state and load worlds on start
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			var state = DragonPersistentState.getServerState(server);

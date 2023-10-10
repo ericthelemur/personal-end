@@ -29,19 +29,21 @@ public class EndPortalBlockMixin {
 	 */
 	@Inject(at = @At("HEAD"), method = "onEntityCollision", cancellable = true)
 	private void sendToEnds(BlockState state, World world, BlockPos pos, Entity entity, CallbackInfo ci) {
-		MinecraftServer server = entity.getServer();
-		if (entity.isPlayer() && world.getRegistryKey() == World.OVERWORLD) {
-			// Send player from overworld to personal End
-			var owner = getDimOwner(entity);
-			var dstate = DragonPersistentState.getServerState(server);
-			PersonalEnd.genAndGoToEnd((PlayerEntity) entity, owner, dstate.getUsername(owner));
-			ci.cancel();
-		} else if (world.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
-			// Send player from person End to overworld
-			PersonalEnd.tpToOverworld(entity, server);
-			ci.cancel();
+		if (PersonalEnd.CONFIG.redirectPortals) {
+			MinecraftServer server = entity.getServer();
+			if (entity.isPlayer() && world.getRegistryKey() == World.OVERWORLD) {
+				// Send player from overworld to personal End
+				var owner = getDimOwner(entity);
+				var dstate = DragonPersistentState.getServerState(server);
+				PersonalEnd.genAndGoToEnd((PlayerEntity) entity, owner, dstate.getUsername(owner));
+				ci.cancel();
+			} else if (world.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
+				// Send player from person End to overworld
+				PersonalEnd.tpToOverworld(entity, server);
+				ci.cancel();
+			}
+			// Non-player and other dims behave as default
 		}
-		// Non-player and other dims behave as default
 	}
 
 	/**

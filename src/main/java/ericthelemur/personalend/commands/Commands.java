@@ -34,6 +34,7 @@ public class Commands {
                 literal("end")
                 .requires(ServerCommandSource::isExecutedByPlayer)
                 .requires(requiresAdvancement("end/root"))
+                .requires((s) -> PersonalEnd.CONFIG.endCommand)
                 .then(
                     literal("visit").then(
                         argument("target", StringArgumentType.word())
@@ -55,6 +56,7 @@ public class Commands {
      */
     public static Predicate<ServerCommandSource> requiresAdvancement(String advancement) {
         return source -> {
+            if (!PersonalEnd.CONFIG.gateCommandBehindAdvancement) return true;
             Advancement a = source.getServer().getAdvancementLoader().get(new Identifier(advancement));
             return source.getPlayer().getAdvancementTracker().getProgress(a).isDone();
         };
