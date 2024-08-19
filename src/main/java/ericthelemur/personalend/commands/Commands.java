@@ -71,7 +71,9 @@ public class Commands {
         return source -> {
             if (!PersonalEnd.CONFIG.gateCommandBehindAdvancement) return true;
             Advancement a = source.getServer().getAdvancementLoader().get(new Identifier(advancement));
-            return source.getPlayer().getAdvancementTracker().getProgress(a).isDone();
+            var p = source.getPlayer();
+            if (p == null) return false;
+            return p.getAdvancementTracker().getProgress(a).isDone();
         };
     }
 

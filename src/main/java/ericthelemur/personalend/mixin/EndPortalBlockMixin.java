@@ -7,6 +7,7 @@ import net.minecraft.block.EndPortalBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionTypes;
@@ -43,6 +44,9 @@ public class EndPortalBlockMixin {
 				ci.cancel();
 			}
 			// Non-player and other dims behave as default
+		} else if (entity.isPlayer()) {
+			// Send message to player going to shared End
+			entity.sendMessage(Text.literal("Visiting the shared End, use /end visit to visit your personal End."));
 		}
 	}
 
