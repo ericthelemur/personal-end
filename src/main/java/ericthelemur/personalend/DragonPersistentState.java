@@ -3,6 +3,7 @@ package ericthelemur.personalend;
 import net.minecraft.entity.boss.dragon.EnderDragonFight;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.PersistentState;
@@ -28,7 +29,7 @@ public class DragonPersistentState extends PersistentState {
      * Write the data of this state into NBT
      */
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
+    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
         // Write dragon data from worlds
         syncDragons();
         NbtCompound dragons = new NbtCompound();
@@ -55,7 +56,7 @@ public class DragonPersistentState extends PersistentState {
     /**
      * Create a state object from NBT
      */
-    public static DragonPersistentState createFromNbt(NbtCompound tag) {
+    public static DragonPersistentState createFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         DragonPersistentState state = new DragonPersistentState();
         var dragons = tag.getCompound("dragons");
         for (var uuid : dragons.getKeys()) {
@@ -69,16 +70,19 @@ public class DragonPersistentState extends PersistentState {
         return state;
     }
 
+    private static Type<DragonPersistentState> type = new Type<>(
+            DragonPersistentState::new,
+            DragonPersistentState::createFromNbt,
+            null
+    );
+
     /**
      * Fetches the shared state object (or creates if new)
      */
     public static DragonPersistentState getServerState(MinecraftServer server) {
         PersistentStateManager persistentStateManager = server.getWorld(World.OVERWORLD).getPersistentStateManager();
 
-        return persistentStateManager.getOrCreate(
-                DragonPersistentState::createFromNbt,
-                DragonPersistentState::new,
-                PersonalEnd.MOD_ID);
+        return persistentStateManager.getOrCreate(type, PersonalEnd.MOD_ID);
     }
 
     /**

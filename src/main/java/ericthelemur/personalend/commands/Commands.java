@@ -12,6 +12,7 @@ import ericthelemur.personalend.Config;
 import ericthelemur.personalend.DragonPersistentState;
 import ericthelemur.personalend.PersonalEnd;
 import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -70,7 +71,7 @@ public class Commands {
     public static Predicate<ServerCommandSource> requiresAdvancement(String advancement) {
         return source -> {
             if (!PersonalEnd.CONFIG.gateCommandBehindAdvancement) return true;
-            Advancement a = source.getServer().getAdvancementLoader().get(new Identifier(advancement));
+            AdvancementEntry a = source.getServer().getAdvancementLoader().get(Identifier.ofVanilla(advancement));
             var p = source.getPlayer();
             if (p == null) return false;
             return p.getAdvancementTracker().getProgress(a).isDone();

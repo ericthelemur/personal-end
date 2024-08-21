@@ -1,6 +1,7 @@
 package ericthelemur.personalend.mixin;
 
 import ericthelemur.personalend.DragonPersistentState;
+import ericthelemur.personalend.PersonalEnd;
 import net.minecraft.entity.boss.dragon.EnderDragonFight;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryKey;
@@ -14,10 +15,9 @@ import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.dimension.DimensionTypes;
 import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.level.storage.LevelStorage;
-import net.minecraft.world.spawner.Spawner;
+import net.minecraft.world.spawner.SpecialSpawner;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -44,10 +44,10 @@ public abstract class ServerWorldMixin extends World {
     }
 
     @Inject(at = @At("TAIL"), method = "<init>")
-    public void constructorMixin(MinecraftServer server, Executor workerExecutor, LevelStorage.Session session, ServerWorldProperties properties, RegistryKey<World> worldKey, DimensionOptions dimensionOptions, WorldGenerationProgressListener worldGenerationProgressListener, boolean debugWorld, long seed, List<Spawner> spawners, boolean shouldTickTime, RandomSequencesState randomSequencesState, CallbackInfo ci) {
+    public void constructorMixin(MinecraftServer server, Executor workerExecutor, LevelStorage.Session session, ServerWorldProperties properties, RegistryKey<World> worldKey, DimensionOptions dimensionOptions, WorldGenerationProgressListener worldGenerationProgressListener, boolean debugWorld, long seed, List<SpecialSpawner> spawners, boolean shouldTickTime, RandomSequencesState randomSequencesState, CallbackInfo ci) {
         var sw = (ServerWorld) (World) this;
         // If a personal End
-        if (this.getRegistryKey() != World.END && sw.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
+        if (PersonalEnd.isPersonalEnd(this)) {
             // If no current dragon (now redundant?)
             if (this.enderDragonFight == null && sw.getAliveEnderDragons().isEmpty()) {
                 // Load existing fight

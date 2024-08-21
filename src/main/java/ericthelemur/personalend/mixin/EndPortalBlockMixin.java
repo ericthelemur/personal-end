@@ -38,7 +38,7 @@ public class EndPortalBlockMixin {
 				var dstate = DragonPersistentState.getServerState(server);
 				PersonalEnd.genAndGoToEnd((PlayerEntity) entity, owner, dstate.getUsername(owner));
 				ci.cancel();
-			} else if (world.getDimensionKey().getValue() == DimensionTypes.THE_END.getValue()) {
+			} else if (PersonalEnd.isAnyEnd(world)) {
 				// Send player from person End to overworld
 				PersonalEnd.tpToOverworld(entity, server);
 				ci.cancel();

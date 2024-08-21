@@ -4,7 +4,6 @@ import ericthelemur.personalend.commands.Commands;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.entity.Entity;
@@ -14,11 +13,14 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionTypes;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.feature.EndPlatformFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.nucleoid.fantasy.Fantasy;
@@ -73,6 +75,15 @@ public class PersonalEnd implements ModInitializer {
 		LOGGER.info("Initialized Personal End!");
 	}
 
+	public static boolean isAnyEnd(World world) {
+		return world.getRegistryKey() == World.END || PersonalEnd.isPersonalEnd(world);
+	}
+
+	public static boolean isPersonalEnd(World world) {
+		PersonalEnd.LOGGER.info("World {} {} {}", world.getRegistryKey(), world.getRegistryKey().getValue(), world.getRegistryKey().getValue().getNamespace());
+		return PersonalEnd.MOD_ID.equals(world.getRegistryKey().getValue().getNamespace());
+	}
+
 	/**
 	 * Creates/loads the personal End dimension & teleports the player to it
 	 * @param visitor Player to teleport to the End dimension
@@ -109,7 +120,7 @@ public class PersonalEnd implements ModInitializer {
 				.setGenerator(end_gen)
 				.setSeed(owner.toString().hashCode());
 
-		Identifier end_key = new Identifier(PersonalEnd.MOD_ID, owner.toString());
+		Identifier end_key = Identifier.of(PersonalEnd.MOD_ID, owner.toString());
 		Fantasy fantasy = Fantasy.get(server);
 		return fantasy.getOrOpenPersistentWorld(end_key, config);
 	}
@@ -119,11 +130,12 @@ public class PersonalEnd implements ModInitializer {
 	 * @return The new player object in new dimension
 	 */
 	private static PlayerEntity tpPlayerToEnd(PlayerEntity player, ServerWorld new_end) {
-		ServerWorld.createEndSpawnPlatform(new_end);
-		Vec3d spawn = ServerWorld.END_SPAWN_POS.toCenterPos();
-		spawn = spawn.add(0, -1.5, 0);
-		TeleportTarget teleportTarget = new TeleportTarget(spawn, Vec3d.ZERO, 90.0F, 0.0F);
-		return FabricDimensions.teleport(player, new_end, teleportTarget);
+		Vec3d vec3d = ServerWorld.END_SPAWN_POS.toBottomCenterPos();
+		EndPlatformFeature.generate(new_end, BlockPos.ofFloored(vec3d).down(), true);
+
+		var tt = new TeleportTarget(new_end, vec3d, player.getVelocity(), Direction.WEST.asRotation(), player.getPitch(),
+								TeleportTarget.SEND_TRAVEL_THROUGH_PORTAL_PACKET.then(TeleportTarget.ADD_PORTAL_CHUNK_TICKET));
+		return (PlayerEntity) player.teleportTo(tt);
 	}
 
 	/**
@@ -133,10 +145,10 @@ public class PersonalEnd implements ModInitializer {
 		MinecraftServer server = player.getServer();
 		var al = server.getAdvancementLoader();
 		var at = player.getAdvancementTracker();
-		var a1 = al.get(new Identifier("end/root"));
+		var a1 = al.get(Identifier.ofVanilla("end/root"));
 		if (!at.getProgress(a1).isDone()) {
 			at.grantCriterion(a1, "entered_end");
-			var a2 = al.get(new Identifier("story/enter_the_end"));
+			var a2 = al.get(Identifier.ofVanilla("story/enter_the_end"));
 			at.grantCriterion(a2, "entered_end");
 			server.getPlayerManager().sendCommandTree(player);
 
@@ -155,11 +167,17 @@ public class PersonalEnd implements ModInitializer {
 	 */
 	public static void tpToOverworld(Entity entity, MinecraftServer server) {
 		ServerWorld serverWorld = server.getOverworld();
-		if (serverWorld == null) {
-			return;
+		if (serverWorld == null) return;
+
+		TeleportTarget tt;
+		if (entity instanceof ServerPlayerEntity) {
+			ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity)entity;
+			tt = serverPlayerEntity.getRespawnTarget(false, TeleportTarget.NO_OP);
+		} else {
+			var pos = entity.getWorldSpawnPos(serverWorld, serverWorld.getSpawnPos()).toBottomCenterPos();
+			tt = new TeleportTarget(serverWorld, pos, entity.getVelocity(), 90F, entity.getPitch(), TeleportTarget.SEND_TRAVEL_THROUGH_PORTAL_PACKET.then(TeleportTarget.ADD_PORTAL_CHUNK_TICKET));
 		}
-		var tt = new TeleportTarget(serverWorld.getSpawnPos().toCenterPos(), Vec3d.ZERO, serverWorld.getSpawnAngle(), 0);
-		FabricDimensions.teleport(entity, serverWorld, tt);
+		entity.teleportTo(tt);
 	}
 
 	/**
@@ -169,6 +187,6 @@ public class PersonalEnd implements ModInitializer {
 		visitor.sendMessage(Text.literal("Visiting the shared end ..."));
 
 		MinecraftServer server = visitor.getServer();
-		visitor.moveToWorld(server.getWorld(World.END));
+		tpPlayerToEnd(visitor, server.getWorld(World.END));
 	}
 }
