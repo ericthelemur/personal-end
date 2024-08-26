@@ -30,21 +30,23 @@ public class EndPortalBlockMixin {
 	 */
 	@Inject(at = @At("HEAD"), method = "onEntityCollision", cancellable = true)
 	private void sendToEnds(BlockState state, World world, BlockPos pos, Entity entity, CallbackInfo ci) {
+		MinecraftServer server = entity.getServer();
+		if (PersonalEnd.isPersonalEnd(world)) {
+			// Send player from person End to overworld
+			PersonalEnd.tpToOverworld(entity, server);
+			ci.cancel();
+		}
+
 		if (PersonalEnd.CONFIG.redirectPortals) {
-			MinecraftServer server = entity.getServer();
 			if (entity.isPlayer() && world.getRegistryKey() == World.OVERWORLD) {
 				// Send player from overworld to personal End
 				var owner = getDimOwner(entity);
 				var dstate = DragonPersistentState.getServerState(server);
 				PersonalEnd.genAndGoToEnd((PlayerEntity) entity, owner, dstate.getUsername(owner));
 				ci.cancel();
-			} else if (PersonalEnd.isAnyEnd(world)) {
-				// Send player from person End to overworld
-				PersonalEnd.tpToOverworld(entity, server);
-				ci.cancel();
 			}
 			// Non-player and other dims behave as default
-		} else if (entity.isPlayer()) {
+		} else if (entity.isPlayer() && !entity.hasPortalCooldown()) {
 			// Send message to player going to shared End
 			entity.sendMessage(Text.literal("Visiting the shared End, use /end visit to visit your personal End."));
 		}

@@ -70,7 +70,7 @@ public class DragonPersistentState extends PersistentState {
         return state;
     }
 
-    private static Type<DragonPersistentState> type = new Type<>(
+    private static final Type<DragonPersistentState> type = new Type<>(
             DragonPersistentState::new,
             DragonPersistentState::createFromNbt,
             null
