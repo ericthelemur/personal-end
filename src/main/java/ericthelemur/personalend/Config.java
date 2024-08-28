@@ -8,9 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Config {
-    public boolean redirectPortals = false;
+    public boolean redirectPortals = true;
     public boolean endCommand = true;
     public boolean gateCommandBehindAdvancement = true;
+    public boolean commandOnEndPlatformOnly = true;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG_PATH = Path.of("config/personalend.json");
@@ -29,7 +30,9 @@ public class Config {
                 Files.createDirectories(CONFIG_PATH.getParent());
                 GSON.toJson(PersonalEnd.CONFIG, writer);
             }
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            PersonalEnd.LOGGER.info("Error writing config {}", e.toString());
+        }
         PersonalEnd.LOGGER.info("{}", PersonalEnd.CONFIG);
     }
 
