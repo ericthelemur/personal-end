@@ -11,6 +11,6 @@ Once you've reached the End, you'll unlock the `/end` command:
 - `/end visit` - go to your own End
 - `/end visit <player>` - go to a player's End (that player must have generated their own already)
 
-This mod is currently for Minecraft version 1.20.1 with Fabric.
+This mod is currently for Minecraft version 1.21.1 with Fabric.
 
 Thanks to @qpcrummer for allowing me to borrow the dragon fight data NBT converter from [Carpet Sky Additionals](https://github.com/Tater-Certified/Carpet-Sky-Additionals)

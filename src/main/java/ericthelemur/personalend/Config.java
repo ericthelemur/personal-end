@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Config {
-    public boolean redirectPortals = true;
+    public boolean redirectPortals = false;
     public boolean endCommand = true;
     public boolean gateCommandBehindAdvancement = true;
     public boolean commandOnEndPlatformOnly = true;
