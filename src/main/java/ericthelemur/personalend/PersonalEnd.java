@@ -136,30 +136,8 @@ public class PersonalEnd implements ModInitializer {
 
 		var tt = new TeleportTarget(new_end, vec3d, entity.getVelocity(), Direction.WEST.asRotation(), entity.getPitch(),
 								TeleportTarget.SEND_TRAVEL_THROUGH_PORTAL_PACKET.then(TeleportTarget.ADD_PORTAL_CHUNK_TICKET));
+		if (entity.isPlayer()) grantAdvancements((ServerPlayerEntity) entity);
 		return tt;
-	}
-
-	/**
-	 * Grants the End visiting advancements to the player. Also sends intruction message if it's their first visit
-	 */
-	private static void grantAdvancements(ServerPlayerEntity player) {
-		MinecraftServer server = player.getServer();
-		var al = server.getAdvancementLoader();
-		var at = player.getAdvancementTracker();
-		var a1 = al.get(Identifier.ofVanilla("end/root"));
-		if (!at.getProgress(a1).isDone()) {
-			at.grantCriterion(a1, "entered_end");
-			var a2 = al.get(Identifier.ofVanilla("story/enter_the_end"));
-			at.grantCriterion(a2, "entered_end");
-			server.getPlayerManager().sendCommandTree(player);
-
-			player.sendMessage(Text.literal(
-			"""
-					You now have your own personal End to explore, loot & beat!
-					Now you've visited your End, use /end shared or /end visit <player> to join others.
-					Entering a portal within 30s after another player pulls you to their End too."""
-			));
-		}
 	}
 
 	/**
@@ -189,5 +167,28 @@ public class PersonalEnd implements ModInitializer {
 
 		MinecraftServer server = visitor.getServer();
 		visitor.teleportTo(createEndTeleportTarget(visitor, server.getWorld(World.END)));
+	}
+
+	/**
+	 * Grants the End visiting advancements to the player. Also sends intruction message if it's their first visit
+	 */
+	private static void grantAdvancements(ServerPlayerEntity player) {
+		MinecraftServer server = player.getServer();
+		var al = server.getAdvancementLoader();
+		var at = player.getAdvancementTracker();
+		var a1 = al.get(Identifier.ofVanilla("end/root"));
+		if (!at.getProgress(a1).isDone()) {
+			at.grantCriterion(a1, "entered_end");
+			var a2 = al.get(Identifier.ofVanilla("story/enter_the_end"));
+			at.grantCriterion(a2, "entered_end");
+			server.getPlayerManager().sendCommandTree(player);
+
+			player.sendMessage(Text.literal(
+					"""
+                            You now have your own personal End to explore, loot & beat!
+                            Now you've visited your End, use /end shared or /end visit <player> to join others.
+                            Entering a portal within 30s after another player pulls you to their End too."""
+			));
+		}
 	}
 }
