@@ -80,7 +80,7 @@ public class PersonalEnd implements ModInitializer {
 	}
 
 	public static boolean isPersonalEnd(World world) {
-		PersonalEnd.LOGGER.info("World {} {} {}", world.getRegistryKey(), world.getRegistryKey().getValue(), world.getRegistryKey().getValue().getNamespace());
+		PersonalEnd.LOGGER.info("World {} {} {} {} {}", world.getRegistryKey(), world.getRegistryKey().getValue(), world.getRegistryKey().getValue().getNamespace(), PersonalEnd.MOD_ID, PersonalEnd.MOD_ID.equals(world.getRegistryKey().getValue().getNamespace()));
 		return PersonalEnd.MOD_ID.equals(world.getRegistryKey().getValue().getNamespace());
 	}
 
@@ -90,7 +90,7 @@ public class PersonalEnd implements ModInitializer {
 	 * @param owner UUID of dimension owner
 	 * @param ownerName Display name of dimension owner
 	 */
-	public static void genAndGoToEnd(PlayerEntity visitor, UUID owner, String ownerName) {
+	public static TeleportTarget genAndGoToEnd(PlayerEntity visitor, UUID owner, String ownerName) {
 		if (ownerName == null || owner.equals(visitor.getUuid())) {
 			visitor.sendMessage(Text.literal("Visiting your end ..."));
 		} else {
@@ -104,8 +104,9 @@ public class PersonalEnd implements ModInitializer {
 		ServerWorld new_end = worldHandle.asWorld();
 
 		visitor.sendMessage(Text.literal("Teleporting ..."));
-		visitor = tpPlayerToEnd(visitor, new_end);
-		grantAdvancements((ServerPlayerEntity) visitor);
+//		visitor = (PlayerEntity) visitor.teleportTo(createEndTeleportTarget(visitor, new_end));
+//		grantAdvancements((ServerPlayerEntity) visitor);
+		return createEndTeleportTarget(visitor, new_end);
 	}
 
 	/**
@@ -129,13 +130,13 @@ public class PersonalEnd implements ModInitializer {
 	 * Teleports a player into the new end (needs to be manual as internal code works for End only)
 	 * @return The new player object in new dimension
 	 */
-	private static PlayerEntity tpPlayerToEnd(PlayerEntity player, ServerWorld new_end) {
+	public static TeleportTarget createEndTeleportTarget(Entity entity, ServerWorld new_end) {
 		Vec3d vec3d = ServerWorld.END_SPAWN_POS.toBottomCenterPos();
 		EndPlatformFeature.generate(new_end, BlockPos.ofFloored(vec3d).down(), true);
 
-		var tt = new TeleportTarget(new_end, vec3d, player.getVelocity(), Direction.WEST.asRotation(), player.getPitch(),
+		var tt = new TeleportTarget(new_end, vec3d, entity.getVelocity(), Direction.WEST.asRotation(), entity.getPitch(),
 								TeleportTarget.SEND_TRAVEL_THROUGH_PORTAL_PACKET.then(TeleportTarget.ADD_PORTAL_CHUNK_TICKET));
-		return (PlayerEntity) player.teleportTo(tt);
+		return tt;
 	}
 
 	/**
@@ -165,9 +166,9 @@ public class PersonalEnd implements ModInitializer {
 	 * Teleports a player back to the overworld from portal
 	 * (default behaviour sends to shared end from individual Ends)
 	 */
-	public static void tpToOverworld(Entity entity, MinecraftServer server) {
+	public static TeleportTarget createOverworldTeleportTarget(Entity entity, MinecraftServer server) {
 		ServerWorld serverWorld = server.getOverworld();
-		if (serverWorld == null) return;
+		if (serverWorld == null) return null;
 
 		TeleportTarget tt;
 		if (entity instanceof ServerPlayerEntity) {
@@ -177,7 +178,7 @@ public class PersonalEnd implements ModInitializer {
 			var pos = entity.getWorldSpawnPos(serverWorld, serverWorld.getSpawnPos()).toBottomCenterPos();
 			tt = new TeleportTarget(serverWorld, pos, entity.getVelocity(), 90F, entity.getPitch(), TeleportTarget.SEND_TRAVEL_THROUGH_PORTAL_PACKET.then(TeleportTarget.ADD_PORTAL_CHUNK_TICKET));
 		}
-		entity.teleportTo(tt);
+		return tt;
 	}
 
 	/**
@@ -187,6 +188,6 @@ public class PersonalEnd implements ModInitializer {
 		visitor.sendMessage(Text.literal("Visiting the shared end ..."));
 
 		MinecraftServer server = visitor.getServer();
-		tpPlayerToEnd(visitor, server.getWorld(World.END));
+		visitor.teleportTo(createEndTeleportTarget(visitor, server.getWorld(World.END)));
 	}
 }

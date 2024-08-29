@@ -48,24 +48,21 @@ public abstract class ServerWorldMixin extends World {
         var sw = (ServerWorld) (World) this;
         // If a personal End
         if (PersonalEnd.isPersonalEnd(this)) {
-            // If no current dragon (now redundant?)
-            if (this.enderDragonFight == null && sw.getAliveEnderDragons().isEmpty()) {
-                // Load existing fight
-                var ident = sw.getRegistryKey().getValue();
-                var state = DragonPersistentState.getServerState(server);
-                var fight = state.getFight(UUID.fromString(ident.getPath()));
-                // Record the world
-                state.addLoadedWorld(ident.getPath(), sw);
-                if (fight != null) {
-                    // Load existing fight if exists
-                    this.enderDragonFight = new EnderDragonFight(sw, sw.getSeed(), fight);
-                    LoggerFactory.getLogger("mixin").info("Loaded dragon fight {}", this.enderDragonFight);
-                } else {
-                    // Set default fight if none
-                    var data = EnderDragonFight.Data.DEFAULT;
-                    this.enderDragonFight = new EnderDragonFight(sw, this.getSeed(), data);
-                    LoggerFactory.getLogger("mixin").info("Created new dragon fight {}", this.enderDragonFight);
-                }
+            // Load existing fight
+            var ident = sw.getRegistryKey().getValue();
+            var state = DragonPersistentState.getServerState(server);
+            var fight = state.getFight(UUID.fromString(ident.getPath()));
+            // Record the world
+            state.addLoadedWorld(ident.getPath(), sw);
+            if (fight != null) {
+                // Load existing fight if exists
+                this.enderDragonFight = new EnderDragonFight(sw, sw.getSeed(), fight);
+                LoggerFactory.getLogger("mixin").info("Loaded dragon fight {}", this.enderDragonFight);
+            } else {
+                // Set default fight if none
+                var data = EnderDragonFight.Data.DEFAULT;
+                this.enderDragonFight = new EnderDragonFight(sw, this.getSeed(), data);
+                LoggerFactory.getLogger("mixin").info("Created new dragon fight {}", this.enderDragonFight);
             }
         }
 

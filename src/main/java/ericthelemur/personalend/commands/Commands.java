@@ -125,7 +125,9 @@ public class Commands {
                 throw new SimpleCommandExceptionType(Text.literal(target + " doesn't have a personal end.")).create();
             }
         }
-        PersonalEnd.genAndGoToEnd(ctx.getSource().getPlayer(), uuid, state.getUsername(uuid));
+        var player = ctx.getSource().getPlayer();
+        var tt = PersonalEnd.genAndGoToEnd(player, uuid, state.getUsername(uuid));
+        player.teleportTo(tt);
 
         return Command.SINGLE_SUCCESS;
     }
