@@ -23,7 +23,7 @@ public class Config {
                 if (config != null) PersonalEnd.CONFIG = config;
             }
         } catch (IOException e) {
-            PersonalEnd.LOGGER.info("New config file generated");
+            PersonalEnd.LOGGER.info("Config does not exist");
         }
         try {
             try (var writer = Files.newBufferedWriter(CONFIG_PATH)) {
