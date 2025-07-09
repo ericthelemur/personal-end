@@ -19,11 +19,13 @@ import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.level.storage.LevelStorage;
 import net.minecraft.world.spawner.SpecialSpawner;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
@@ -66,6 +68,18 @@ public abstract class ServerWorldMixin extends World {
             }
         }
 
+    }
+
+    @Redirect(
+            method = "saveLevel()V",
+            at = @At(value = "FIELD", target = "Lnet/minecraft/server/world/ServerWorld;enderDragonFight : Lnet/minecraft/entity/boss/dragon/EnderDragonFight;", opcode = Opcodes.GETFIELD)
+    )
+    private EnderDragonFight saveLevel(ServerWorld world) {
+        if (world.getRegistryKey() == World.END) {
+            return world.getEnderDragonFight();
+        } else {
+            return null;
+        }
     }
 }
 
