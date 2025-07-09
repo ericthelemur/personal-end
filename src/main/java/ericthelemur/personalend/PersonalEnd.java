@@ -80,7 +80,6 @@ public class PersonalEnd implements ModInitializer {
 	}
 
 	public static boolean isPersonalEnd(World world) {
-		PersonalEnd.LOGGER.info("World {} {} {} {} {}", world.getRegistryKey(), world.getRegistryKey().getValue(), world.getRegistryKey().getValue().getNamespace(), PersonalEnd.MOD_ID, PersonalEnd.MOD_ID.equals(world.getRegistryKey().getValue().getNamespace()));
 		return PersonalEnd.MOD_ID.equals(world.getRegistryKey().getValue().getNamespace());
 	}
 
@@ -136,7 +135,7 @@ public class PersonalEnd implements ModInitializer {
 
 		var tt = new TeleportTarget(new_end, vec3d, entity.getVelocity(), Direction.WEST.asRotation(), entity.getPitch(),
 								TeleportTarget.SEND_TRAVEL_THROUGH_PORTAL_PACKET.then(TeleportTarget.ADD_PORTAL_CHUNK_TICKET));
-		if (entity.isPlayer()) grantAdvancements((ServerPlayerEntity) entity);
+		if (entity.isPlayer()) grantAdvancements((ServerPlayerEntity) entity, PersonalEnd.isPersonalEnd(new_end));
 		return tt;
 	}
 
@@ -170,9 +169,9 @@ public class PersonalEnd implements ModInitializer {
 	}
 
 	/**
-	 * Grants the End visiting advancements to the player. Also sends intruction message if it's their first visit
+	 * Grants the End visiting advancements to the player. Also sends instruction message if it's their first visit
 	 */
-	private static void grantAdvancements(ServerPlayerEntity player) {
+	private static void grantAdvancements(ServerPlayerEntity player, boolean isPersonal) {
 		MinecraftServer server = player.getServer();
 		var al = server.getAdvancementLoader();
 		var at = player.getAdvancementTracker();
@@ -183,12 +182,17 @@ public class PersonalEnd implements ModInitializer {
 			at.grantCriterion(a2, "entered_end");
 			server.getPlayerManager().sendCommandTree(player);
 
-			player.sendMessage(Text.literal(
-					"""
-                            You now have your own personal End to explore, loot & beat!
-                            Now you've visited your End, use /end shared or /end visit <player> to join others.
-                            Entering a portal within 30s after another player pulls you to their End too."""
-			));
+			var stringBuilder = new StringBuilder();
+			stringBuilder.append("You now have your own personal End to explore, loot & beat!\n");
+			if (!isPersonal) {
+				stringBuilder.append("Now you've visited the shared End, use /end visit to visit your personal End");
+			} else {
+				stringBuilder.append("Now you've visited your End, use /end shared to visit the shared End");
+			}
+			stringBuilder.append(", or /end visit <player> to join others.\n");
+			stringBuilder.append("Entering a portal within 30s after another player pulls you to their End too.");
+
+			player.sendMessage(Text.literal(stringBuilder.toString()));
 		}
 	}
 }
